@@ -3,7 +3,6 @@ package air_etcd
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"github.com/airingone/log"
 	"go.etcd.io/etcd/clientv3"
 	"sync"
@@ -13,12 +12,13 @@ import (
 type EtcdClient struct {
 	Ctx            context.Context
 	Client         *clientv3.Client
-	ServerNames    []string
+	ServerNames    string
 	ServerInfos    map[string]ServerInfoSt
 	ServerInfoLock sync.RWMutex
 }
 
-func NewEtcdClient(serverNames []string, endpoints []string) (*EtcdClient, error) {
+//创建client对象
+func NewEtcdClient(serverNames string, endpoints []string) (*EtcdClient, error) {
 	cli, err := NewEtcd(endpoints)
 	if err != nil {
 		return nil, err
@@ -36,17 +36,28 @@ func NewEtcdClient(serverNames []string, endpoints []string) (*EtcdClient, error
 
 //监控以服务名为前缀的key
 func (c *EtcdClient) Watcher() {
-	for _, name := range c.ServerNames {
-		go c.watcher(name)
-	}
+	go c.watcher(c.ServerNames)
+
 }
 
+//监控服务注册变化
 func (c *EtcdClient) watcher(serverName string) error {
 	defer func() {
 		if r := recover(); r != nil {
 			log.PanicTrack()
 		}
 	}()
+
+	resp, err := c.Client.Get(context.Background(), c.ServerNames, clientv3.WithPrefix())
+	if err == nil {
+		for _, kv := range resp.Kvs {
+			var serverInfo ServerInfoSt
+			err := json.Unmarshal([]byte(kv.Value), &serverInfo)
+			if err == nil {
+				c.insertServerInfo(string(kv.Key), serverInfo)
+			}
+		}
+	}
 
 	rCh := c.Client.Watch(c.Ctx, serverName, clientv3.WithPrefix())
 	for r := range rCh { //会一直等待
@@ -70,6 +81,7 @@ func (c *EtcdClient) watcher(serverName string) error {
 	return nil
 }
 
+//停止
 func (c *EtcdClient) Stop() {
 	c.Client.Close()
 }
@@ -86,12 +98,14 @@ func (c *EtcdClient) deleteServerInfo(key string) {
 	delete(c.ServerInfos, key)
 }
 
-func (c *EtcdClient) GetServerInfo(key string) (ServerInfoSt, error) {
+//拉取全量服务地址
+func (c *EtcdClient) GetServerInfo(key string) ([]ServerInfoSt, error) {
 	c.ServerInfoLock.RLock()
 	defer c.ServerInfoLock.RUnlock()
-	if info, ok := c.ServerInfos[key]; ok {
-		return info, nil
+	var infos []ServerInfoSt
+	for _, v := range c.ServerInfos {
+		infos = append(infos, v)
 	}
 
-	return ServerInfoSt{}, errors.New("not exist")
+	return infos, nil
 }
