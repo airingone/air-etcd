@@ -30,6 +30,30 @@ type EtcdServer struct {
 	StopState  chan error
 }
 
+//注册服务到etcd
+func RegisterLocalServerToEtcd(serverName string, port uint32, etcdEndpoints []string) error {
+	var info ServerInfoSt
+	info.Name = serverName
+	info.Port = port
+	ip, err := GetLoaclIp()
+	if err != nil {
+		log.Error("RegisterLocalServerToEtcd: GetLoaclIp err")
+		return err
+	}
+	info.Ip = ip
+
+	etcdClient, err := NewEtcdServer(info, etcdEndpoints)
+	if err != nil {
+		log.Error("RegisterLocalServerToEtcd: GetLoaclIp err")
+
+		return err
+	}
+
+	etcdClient.Start()
+
+	return nil
+}
+
 //创建一个etcd client，endpoints为etcd的地址列表
 func NewEtcdServer(serverInfo ServerInfoSt, endpoints []string) (*EtcdServer, error) {
 	cli, err := NewEtcd(endpoints)

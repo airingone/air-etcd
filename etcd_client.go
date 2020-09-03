@@ -31,6 +31,8 @@ func NewEtcdClient(serverNames string, endpoints []string) (*EtcdClient, error) 
 		ServerInfos: make(map[string]ServerInfoSt),
 	}
 
+	client.Watcher()
+
 	return client, err
 }
 
@@ -58,6 +60,7 @@ func (c *EtcdClient) watcher(serverName string) error {
 			}
 		}
 	}
+	defer c.Stop()
 
 	rCh := c.Client.Watch(c.Ctx, serverName, clientv3.WithPrefix())
 	for r := range rCh { //会一直等待
