@@ -31,27 +31,24 @@ type EtcdServer struct {
 }
 
 //注册服务到etcd
-func RegisterLocalServerToEtcd(serverName string, port uint32, etcdEndpoints []string) error {
+func RegisterLocalServerToEtcd(serverName string, port uint32, etcdEndpoints []string) {
 	var info ServerInfoSt
 	info.Name = serverName
 	info.Port = port
 	ip, err := GetLoaclIp()
 	if err != nil {
-		log.Error("RegisterLocalServerToEtcd: GetLoaclIp err")
-		return err
+		log.Fatal("RegisterLocalServerToEtcd: GetLoaclIp err")
+		return
 	}
 	info.Ip = ip
 
 	etcdClient, err := NewEtcdServer(info, etcdEndpoints)
 	if err != nil {
-		log.Error("RegisterLocalServerToEtcd: GetLoaclIp err")
-
-		return err
+		log.Fatal("RegisterLocalServerToEtcd: GetLoaclIp err")
+		return
 	}
 
 	etcdClient.Start()
-
-	return nil
 }
 
 //创建一个etcd client，endpoints为etcd的地址列表
