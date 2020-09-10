@@ -7,8 +7,8 @@ import (
 )
 
 func ChangeAddrToGrpc(info *ServerInfoSt) string {
-	addr := "http://"
-	addr += info.Ip
+	//addr := "http://"
+	addr := info.Ip
 	addr += ":"
 	addr += fmt.Sprint(info.Port)
 

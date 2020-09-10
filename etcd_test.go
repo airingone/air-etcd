@@ -62,7 +62,7 @@ func TestGrpcClient(t *testing.T) {
 
 	var endpoints []string //etcd集群的地址
 	endpoints = append(endpoints, "127.0.0.1:2380")
-	r := NewGrpcResolver("server1", endpoints)
+	r := NewGrpcResolver(endpoints)
 	resolver.Register(r)
 
 	ctx, _ := context.WithTimeout(context.Background(), 3*time.Second)

@@ -18,18 +18,18 @@ type GrpcResolver struct {
 }
 
 //Create
-func NewGrpcResolver(serviceName string, endpoints []string) *GrpcResolver {
+func NewGrpcResolver( /*serviceName string,*/ endpoints []string) *GrpcResolver {
 	r := &GrpcResolver{
-		ServiceName: serviceName,
-		Endpoints:   endpoints,
-		AddrDict:    make(map[string]resolver.Address),
+		//ServiceName: serviceName,
+		Endpoints: endpoints,
+		AddrDict:  make(map[string]resolver.Address),
 	}
 	return r
 }
 
 //Scheme
 func (r *GrpcResolver) Scheme() string {
-	return "ipv4"
+	return r.ServiceName
 }
 
 //build
@@ -38,7 +38,8 @@ func (r *GrpcResolver) Build(target resolver.Target, cc resolver.ClientConn, opt
 	if err != nil {
 		return nil, err
 	}
-
+	r.ServiceName = target.Endpoint //	即为grpc Dail函数的target参数
+	log.Info("Build: target: %+v", target)
 	r.Cc = cc
 	r.Client = cli
 
@@ -102,6 +103,7 @@ func (r *GrpcResolver) update() {
 		state.Addresses = append(state.Addresses, v)
 	}
 	r.Cc.UpdateState(state)
+	log.Info("update: addr: %+v", state)
 }
 
 /*
