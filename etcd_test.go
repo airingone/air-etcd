@@ -39,14 +39,20 @@ func TestEtcdClient(t *testing.T) {
 
 	var endpoints []string //etcd集群的地址
 	endpoints = append(endpoints, "127.0.0.1:2380")
-	etcdClient, err := NewEtcdClient("congfig_test", endpoints)
+	etcdClient, err := NewEtcdClient("server1", endpoints)
 	if err != nil {
 		t.Logf("errorf:%+v", err)
 	}
 
 	time.Sleep(5 * time.Second)
-	addr, err := etcdClient.GetServerInfo("server1")
-	log.Error("addrs: %+v", addr)
+	addr, err := etcdClient.GetAllServerAddr()
+	log.Error("addrs1: %+v", addr)
+
+	cli, err := GetEtcdClientByServerName("server1")
+	if err == nil {
+		addr, _ := cli.RandGetServerAddr()
+		log.Error("addrs2: %+v", addr)
+	}
 
 	select {}
 }

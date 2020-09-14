@@ -58,7 +58,7 @@ func NewEtcdServer(serverInfo ServerInfoSt, endpoints []string) (*EtcdServer, er
 		return nil, err
 	}
 
-	key := serverInfo.Name + "/" + serverInfo.Ip
+	key := GetHostKey(serverInfo.Name, serverInfo.Ip)
 	value, err := json.Marshal(serverInfo)
 	if err != nil {
 		return nil, err

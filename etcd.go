@@ -3,6 +3,7 @@ package air_etcd
 import (
 	"context"
 	"go.etcd.io/etcd/clientv3"
+	"strings"
 	"time"
 )
 
@@ -30,4 +31,17 @@ func NewEtcd(endpoints []string) (*clientv3.Client, error) {
 	}
 
 	return cli, nil
+}
+
+func GetHostKey(serverName string, ip string) string {
+	return serverName + "/" + ip
+}
+
+func GetKeyInfo(key string) (string, string) {
+	subStr := strings.Split(key, "/")
+	if len(subStr) != 2 {
+		return "", ""
+	}
+
+	return subStr[0], subStr[1]
 }
