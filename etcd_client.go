@@ -17,7 +17,7 @@ var AllEtcdClients map[string]*EtcdClient //全局etcd client
 type EtcdClient struct {
 	Ctx            context.Context
 	Client         *clientv3.Client
-	ServerNames    string
+	ServerName     string
 	ServerInfos    []ServerInfoSt
 	ServerInfoLock sync.RWMutex
 }
@@ -25,10 +25,10 @@ type EtcdClient struct {
 //根据服务名拉取已初始化过的etcd client
 func GetEtcdClientByServerName(serverNames string) (*EtcdClient, error) {
 	if AllEtcdClients == nil {
-		return nil, errors.New("not init")
+		return nil, errors.New("etcd all client not init")
 	}
 	if _, ok := AllEtcdClients[serverNames]; !ok {
-		return nil, errors.New("not init")
+		return nil, errors.New("etcd client not init")
 	}
 
 	return AllEtcdClients[serverNames], nil
@@ -36,22 +36,24 @@ func GetEtcdClientByServerName(serverNames string) (*EtcdClient, error) {
 
 //创建client对象
 func NewEtcdClient(serverNames string, endpoints []string) (*EtcdClient, error) {
+	if AllEtcdClients == nil {
+		AllEtcdClients = make(map[string]*EtcdClient)
+	}
+
+	if _, ok := AllEtcdClients[serverNames]; ok { //已初始化过则不再初始化
+		return AllEtcdClients[serverNames], nil
+	}
+
 	cli, err := NewEtcd(endpoints)
 	if err != nil {
 		return nil, err
 	}
-
 	client := &EtcdClient{
-		Ctx:         context.Background(),
-		Client:      cli,
-		ServerNames: serverNames,
-	}
-
-	if AllEtcdClients == nil {
-		AllEtcdClients = make(map[string]*EtcdClient)
+		Ctx:        context.Background(),
+		Client:     cli,
+		ServerName: serverNames,
 	}
 	AllEtcdClients[serverNames] = client
-
 	client.Watcher()
 
 	return client, err
@@ -59,8 +61,8 @@ func NewEtcdClient(serverNames string, endpoints []string) (*EtcdClient, error) 
 
 //监控以服务名为前缀的key
 func (c *EtcdClient) Watcher() {
-	go c.watcher(c.ServerNames)
-
+	log.Info("etcd client: Watcher severName: %s", c.ServerName)
+	go c.watcher(c.ServerName)
 }
 
 //监控服务注册变化
@@ -71,7 +73,7 @@ func (c *EtcdClient) watcher(serverName string) error {
 		}
 	}()
 
-	resp, err := c.Client.Get(context.Background(), c.ServerNames, clientv3.WithPrefix())
+	resp, err := c.Client.Get(context.Background(), c.ServerName, clientv3.WithPrefix())
 	if err == nil {
 		for _, kv := range resp.Kvs {
 			var serverInfo ServerInfoSt
@@ -149,7 +151,7 @@ func (c *EtcdClient) RandGetServerAddr() (ServerInfoSt, error) {
 	var info ServerInfoSt
 	size := len(c.ServerInfos)
 	if size < 1 {
-		return info, errors.New("not exist")
+		return info, errors.New("etcd addr not exist")
 	}
 	rand.Seed(time.Now().UnixNano())
 	index := rand.Int()

@@ -1,5 +1,5 @@
 server:
-  name: test
+  name: etcd_test
   author: airing
   version: 1.0
   port: 8080
