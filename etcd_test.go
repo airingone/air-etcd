@@ -46,12 +46,12 @@ func TestEtcdClient(t *testing.T) {
 
 	time.Sleep(5 * time.Second)
 	addr, err := etcdClient.GetAllServerAddr()
-	log.Error("addrs1: %+v", addr)
+	log.Error("[ETCD]: addrs1 %+v", addr)
 
 	cli, err := GetEtcdClientByServerName("server1")
 	if err == nil {
 		addr, _ := cli.RandGetServerAddr()
-		log.Error("addrs2: %+v", addr)
+		log.Error("[ETCD]: addrs2 %+v", addr)
 	}
 
 	select {}

@@ -39,7 +39,7 @@ func (r *GrpcResolver) Build(target resolver.Target, cc resolver.ClientConn, opt
 		return nil, err
 	}
 	r.ServiceName = target.Endpoint //	即为grpc Dail函数的target参数
-	log.Info("Build: target: %+v", target)
+	log.Info("[ETCD]: Build target: %+v", target)
 	r.Cc = cc
 	r.Client = cli
 
@@ -103,7 +103,7 @@ func (r *GrpcResolver) update() {
 		state.Addresses = append(state.Addresses, v)
 	}
 	r.Cc.UpdateState(state)
-	log.Info("update: addr: %+v", state)
+	log.Info("[ETCD]: update addr: %+v", state)
 }
 
 /*

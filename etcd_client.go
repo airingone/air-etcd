@@ -61,7 +61,7 @@ func NewEtcdClient(serverNames string, endpoints []string) (*EtcdClient, error) 
 
 //监控以服务名为前缀的key
 func (c *EtcdClient) Watcher() {
-	log.Info("etcd client: Watcher severName: %s", c.ServerName)
+	log.Info("[ETCD]: etcd client Watcher severName: %s", c.ServerName)
 	go c.watcher(c.ServerName)
 }
 
@@ -88,13 +88,13 @@ func (c *EtcdClient) watcher(serverName string) error {
 	rCh := c.Client.Watch(c.Ctx, serverName, clientv3.WithPrefix())
 	for r := range rCh { //会一直等待
 		for _, ev := range r.Events {
-			log.Info("EtcdClient: event type:%d, key:%s, value:%s", ev.Type, string(ev.Kv.Key), string(ev.Kv.Value))
+			log.Info("[ETCD]: event type:%d, key:%s, value:%s", ev.Type, string(ev.Kv.Key), string(ev.Kv.Value))
 			switch ev.Type {
 			case clientv3.EventTypePut:
 				var serverInfo ServerInfoSt
 				err := json.Unmarshal(ev.Kv.Value, &serverInfo)
 				if err != nil {
-					log.Error("EtcdClient: Unmarshal ServerInfo err")
+					log.Error("[ETCD]: EtcdClient Unmarshal ServerInfo err")
 				} else {
 					c.insertServerInfo(string(ev.Kv.Key), serverInfo)
 				}

@@ -37,14 +37,14 @@ func RegisterLocalServerToEtcd(serverName string, port uint32, etcdEndpoints []s
 	info.Port = port
 	ip, err := GetLoaclIp()
 	if err != nil {
-		log.Fatal("RegisterLocalServerToEtcd: GetLoaclIp err")
+		log.Fatal("[ETCD]: RegisterLocalServerToEtcd GetLoaclIp err")
 		return
 	}
 	info.Ip = ip
 
 	etcdClient, err := NewEtcdServer(info, etcdEndpoints)
 	if err != nil {
-		log.Fatal("RegisterLocalServerToEtcd: GetLoaclIp err")
+		log.Fatal("[ETCD]: RegisterLocalServerToEtcd GetLoaclIp err")
 		return
 	}
 
@@ -96,17 +96,17 @@ func (s *EtcdServer) startProcess() error {
 	for {
 		select {
 		case err := <-s.StopState:
-			log.Info("ETCD: Stop")
+			log.Info("[ETCD]: Stop")
 			return err
 		case <-s.Client.Ctx().Done():
-			log.Info("ETCD: Ctx Done")
+			log.Info("[ETCD]: Ctx Done")
 			return errors.New("server closed")
 		case resp, ok := <-ch:
 			if !ok { //租约已关闭
-				log.Info("ETCD: Revoke, err:%+v", ok)
+				log.Info("[ETCD]: Revoke, err:%+v", ok)
 				return s.revoke()
 			}
-			log.Info("ETCD: recv reply from service: key: %s, ttl: %d, id: %d", s.Key, resp.TTL, resp.ID)
+			log.Info("[ETCD]: recv reply from service: key: %s, ttl: %d, id: %d", s.Key, resp.TTL, resp.ID)
 		}
 	}
 }
