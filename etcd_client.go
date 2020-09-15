@@ -7,6 +7,7 @@ import (
 	"github.com/airingone/log"
 	"go.etcd.io/etcd/clientv3"
 	"math/rand"
+	"strings"
 	"sync"
 	"time"
 )
@@ -20,6 +21,26 @@ type EtcdClient struct {
 	ServerName     string
 	ServerInfos    []ServerInfoSt
 	ServerInfoLock sync.RWMutex
+}
+
+//程序启动时为每一个etcd client初始化etcd
+func InitEtcdClient(etcdAddrs []string, addrs ...string) {
+	for _, addr := range addrs {
+		index := strings.IndexAny(addr, ":")
+		if index == -1 {
+			return
+		}
+		addrType := addr[0:index]
+		serverName := addr[index+1:]
+
+		if addrType == "etcd" { //校验
+			_, err := NewEtcdClient(serverName, etcdAddrs)
+			if err != nil {
+				log.Error("[ETCD]: NewEtcdClient err: %+v", err)
+				return
+			}
+		}
+	}
 }
 
 //根据服务名拉取已初始化过的etcd client
