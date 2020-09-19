@@ -37,14 +37,14 @@ func RegisterLocalServerToEtcd(serverName string, port uint32, etcdEndpoints []s
 	info.Port = port
 	ip, err := GetLoaclIp()
 	if err != nil {
-		log.Fatal("[ETCD]: RegisterLocalServerToEtcd GetLoaclIp err")
+		log.Fatal("[ETCD]: RegisterLocalServerToEtcd GetLoaclIp err, err: %+v", err)
 		return
 	}
 	info.Ip = ip
 
 	etcdClient, err := NewEtcdServer(info, etcdEndpoints)
 	if err != nil {
-		log.Fatal("[ETCD]: RegisterLocalServerToEtcd GetLoaclIp err")
+		log.Fatal("[ETCD]: RegisterLocalServerToEtcd NewEtcdServer err, err: %+v", err)
 		return
 	}
 

@@ -18,7 +18,7 @@ func ChangeAddrToGrpc(info *ServerInfoSt) string {
 func GetLoaclIp() (string, error) {
 	addrs, err := net.InterfaceAddrs()
 	if err != nil {
-		fmt.Println(err)
+		//fmt.Println(err)
 		return "", err
 	}
 
