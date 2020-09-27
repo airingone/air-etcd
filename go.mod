@@ -3,7 +3,7 @@ module github.com/airingone/air-etcd
 go 1.13
 
 require (
-	github.com/airingone/config v0.0.0-20200831042000-407b98b11b9f
+	github.com/airingone/config v1.0.8
 	github.com/airingone/log v0.0.0-20200831072359-6cec598b97cf
 	github.com/coreos/etcd v3.3.25+incompatible // indirect
 	github.com/coreos/go-systemd v0.0.0-20191104093116-d3cd4ed1dbcf // indirect
@@ -28,3 +28,5 @@ require (
 	gopkg.in/ini.v1 v1.60.2 // indirect
 	sigs.k8s.io/yaml v1.2.0 // indirect
 )
+
+replace github.com/airingone/config v1.0.8 => /Users/air/go/src/airingone/config

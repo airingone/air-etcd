@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"github.com/airingone/config"
 	"github.com/airingone/log"
 	"go.etcd.io/etcd/clientv3"
 	"math/rand"
@@ -13,6 +14,7 @@ import (
 )
 
 var AllEtcdClients map[string]*EtcdClient //全局etcd client
+var AllEtcdClientsRmu sync.RWMutex
 
 //用户请求端获取地址etcd
 type EtcdClient struct {
@@ -24,7 +26,7 @@ type EtcdClient struct {
 }
 
 //程序启动时为每一个etcd client初始化etcd
-func InitEtcdClient(etcdAddrs []string, addrs ...string) {
+func InitEtcdClient(config config.ConfigEtcd, addrs ...string) {
 	for _, addr := range addrs {
 		index := strings.IndexAny(addr, ":")
 		if index == -1 {
@@ -34,11 +36,20 @@ func InitEtcdClient(etcdAddrs []string, addrs ...string) {
 		serverName := addr[index+1:]
 
 		if addrType == "etcd" { //校验
-			_, err := NewEtcdClient(serverName, etcdAddrs)
+			_, err := NewEtcdClient(serverName, config.Addrs)
 			if err != nil {
 				log.Error("[ETCD]: NewEtcdClient err: %+v", err)
 				return
 			}
+		}
+	}
+}
+
+//close all etcd client
+func CloseEtcdClient() {
+	for _, cli := range AllEtcdClients {
+		if cli != nil {
+			cli.Stop()
 		}
 	}
 }
@@ -48,6 +59,8 @@ func GetEtcdClientByServerName(serverNames string) (*EtcdClient, error) {
 	if AllEtcdClients == nil {
 		return nil, errors.New("etcd all client not init")
 	}
+	AllEtcdClientsRmu.RLock()
+	defer AllEtcdClientsRmu.RUnlock()
 	if _, ok := AllEtcdClients[serverNames]; !ok {
 		return nil, errors.New("etcd client not init")
 	}
@@ -61,6 +74,8 @@ func NewEtcdClient(serverNames string, endpoints []string) (*EtcdClient, error) 
 		AllEtcdClients = make(map[string]*EtcdClient)
 	}
 
+	AllEtcdClientsRmu.Lock()
+	defer AllEtcdClientsRmu.Unlock()
 	if _, ok := AllEtcdClients[serverNames]; ok { //已初始化过则不再初始化
 		return AllEtcdClients[serverNames], nil
 	}
