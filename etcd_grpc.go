@@ -8,16 +8,19 @@ import (
 	"google.golang.org/grpc/resolver"
 )
 
+//etcd grpc client，用于从etcd集群获取服务地址
+
 //为grpc封装的解析器
 type GrpcResolver struct {
-	Endpoints   []string
-	ServiceName string
-	Client      *clientv3.Client
-	Cc          resolver.ClientConn
-	AddrDict    map[string]resolver.Address
+	Endpoints   []string                    //etcd集群地址
+	ServiceName string                      //服务名
+	Client      *clientv3.Client            //etcd client
+	Cc          resolver.ClientConn         //etcd conn
+	AddrDict    map[string]resolver.Address //grpc addr dict
 }
 
 //Create
+//endpoints: etcd集群地址
 func NewGrpcResolver( /*serviceName string,*/ endpoints []string) *GrpcResolver {
 	r := &GrpcResolver{
 		//ServiceName: serviceName,
@@ -33,6 +36,9 @@ func (r *GrpcResolver) Scheme() string {
 }
 
 //build
+//target: 为grpc Dail函数的target参数
+//cc: resolver
+//opts: 参数
 func (r *GrpcResolver) Build(target resolver.Target, cc resolver.ClientConn, opts resolver.BuildOptions) (resolver.Resolver, error) {
 	cli, err := NewEtcd(r.Endpoints)
 	if err != nil {
@@ -105,8 +111,3 @@ func (r *GrpcResolver) update() {
 	r.Cc.UpdateState(state)
 	log.Info("[ETCD]: update addr: %+v", state)
 }
-
-/*
-type GrpcBuilder struct {
-}
-*/

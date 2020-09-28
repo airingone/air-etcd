@@ -6,6 +6,10 @@ import (
 	"net"
 )
 
+//普通功能函数
+
+//将地址信息转化为grpc地址
+//info: 地址信息
 func ChangeAddrToGrpc(info *ServerInfoSt) string {
 	//addr := "http://"
 	addr := info.Ip
@@ -15,6 +19,7 @@ func ChangeAddrToGrpc(info *ServerInfoSt) string {
 	return addr
 }
 
+//获取本地ip
 func GetLoaclIp() (string, error) {
 	addrs, err := net.InterfaceAddrs()
 	if err != nil {

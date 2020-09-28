@@ -13,20 +13,28 @@ import (
 	"time"
 )
 
+//etcd普通client，用于从etcd集群获取服务地址
+
 var AllEtcdClients map[string]*EtcdClient //全局etcd client
 var AllEtcdClientsRmu sync.RWMutex
 
 //用户请求端获取地址etcd
 type EtcdClient struct {
-	Ctx            context.Context
-	Client         *clientv3.Client
-	ServerName     string
-	ServerInfos    []ServerInfoSt
+	Ctx            context.Context  //context
+	Client         *clientv3.Client //etcd client
+	ServerName     string           //服务名
+	ServerInfos    []ServerInfoSt   //服务信息
 	ServerInfoLock sync.RWMutex
 }
 
 //程序启动时为每一个etcd client初始化etcd
+//config: etcd集群配置
+//addrs: 需要获取配置的服务名
 func InitEtcdClient(config config.ConfigEtcd, addrs ...string) {
+	if AllEtcdClients == nil {
+		AllEtcdClients = make(map[string]*EtcdClient)
+	}
+
 	for _, addr := range addrs {
 		index := strings.IndexAny(addr, ":")
 		if index == -1 {
@@ -36,17 +44,26 @@ func InitEtcdClient(config config.ConfigEtcd, addrs ...string) {
 		serverName := addr[index+1:]
 
 		if addrType == "etcd" { //校验
-			_, err := NewEtcdClient(serverName, config.Addrs)
+			client, err := NewEtcdClient(serverName, config.Addrs)
 			if err != nil {
 				log.Error("[ETCD]: NewEtcdClient err: %+v", err)
 				return
 			}
+			AllEtcdClientsRmu.Lock()
+			if oldClient, ok := AllEtcdClients[serverName]; ok { //已初始化过则关闭
+				oldClient.Stop()
+			}
+			AllEtcdClients[serverName] = client
+			AllEtcdClientsRmu.Unlock()
 		}
 	}
 }
 
 //close all etcd client
 func CloseEtcdClient() {
+	if AllEtcdClients == nil {
+		return
+	}
 	for _, cli := range AllEtcdClients {
 		if cli != nil {
 			cli.Stop()
@@ -55,6 +72,7 @@ func CloseEtcdClient() {
 }
 
 //根据服务名拉取已初始化过的etcd client
+//serverNames: 服务名
 func GetEtcdClientByServerName(serverNames string) (*EtcdClient, error) {
 	if AllEtcdClients == nil {
 		return nil, errors.New("etcd all client not init")
@@ -69,17 +87,9 @@ func GetEtcdClientByServerName(serverNames string) (*EtcdClient, error) {
 }
 
 //创建client对象
-func NewEtcdClient(serverNames string, endpoints []string) (*EtcdClient, error) {
-	if AllEtcdClients == nil {
-		AllEtcdClients = make(map[string]*EtcdClient)
-	}
-
-	AllEtcdClientsRmu.Lock()
-	defer AllEtcdClientsRmu.Unlock()
-	if _, ok := AllEtcdClients[serverNames]; ok { //已初始化过则不再初始化
-		return AllEtcdClients[serverNames], nil
-	}
-
+//serverName: 服务名
+//endpoints: etcd集群地址
+func NewEtcdClient(serverName string, endpoints []string) (*EtcdClient, error) {
 	cli, err := NewEtcd(endpoints)
 	if err != nil {
 		return nil, err
@@ -87,9 +97,8 @@ func NewEtcdClient(serverNames string, endpoints []string) (*EtcdClient, error) 
 	client := &EtcdClient{
 		Ctx:        context.Background(),
 		Client:     cli,
-		ServerName: serverNames,
+		ServerName: serverName,
 	}
-	AllEtcdClients[serverNames] = client
 	client.Watcher()
 
 	return client, err
@@ -102,6 +111,7 @@ func (c *EtcdClient) Watcher() {
 }
 
 //监控服务注册变化
+//serverName: 服务名
 func (c *EtcdClient) watcher(serverName string) error {
 	defer func() {
 		if r := recover(); r != nil {
@@ -148,12 +158,17 @@ func (c *EtcdClient) Stop() {
 	c.Client.Close()
 }
 
+//将key信息写入到ServerInfos
+//key: etcd数据key
+//serverInfo: serverc信息
 func (c *EtcdClient) insertServerInfo(key string, serverInfo ServerInfoSt) {
 	c.ServerInfoLock.Lock()
 	defer c.ServerInfoLock.Unlock()
 	c.ServerInfos = append(c.ServerInfos, serverInfo)
 }
 
+//将key信息移除ServerInfos
+//key: etcd数据key
 func (c *EtcdClient) deleteServerInfo(key string) {
 	c.ServerInfoLock.Lock()
 	defer c.ServerInfoLock.Unlock()

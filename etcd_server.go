@@ -8,6 +8,8 @@ import (
 	"go.etcd.io/etcd/clientv3"
 )
 
+//etcd client，用于上报服务地址到etcd集群
+
 const (
 	EtcdServerGrantTtl = 180 //即60s的租约，key 60s后过期，需要续租,EtcdServerGrantTtl为数据过期时间，EtcdServerGrantTtl/3为触发周期
 )
@@ -21,16 +23,19 @@ type ServerInfoSt struct {
 
 //用于服务端注册的etcd
 type EtcdServer struct {
-	Ctx        context.Context
-	Client     *clientv3.Client
-	ServerInfo ServerInfoSt
-	Key        string
-	Value      string
-	LeasdId    clientv3.LeaseID
-	StopState  chan error
+	Ctx        context.Context  //context
+	Client     *clientv3.Client //etcd client
+	ServerInfo ServerInfoSt     //服务信息
+	Key        string           //当前服务的key
+	Value      string           //当前服务的value
+	LeasdId    clientv3.LeaseID //上一次更新id
+	StopState  chan error       //stop
 }
 
 //注册服务到etcd
+//serverName: 当前服务名
+//port: 当前服务端口
+//etcdEndpoints: etcd集群地址
 func RegisterLocalServerToEtcd(serverName string, port uint32, etcdEndpoints []string) {
 	var info ServerInfoSt
 	info.Name = serverName
@@ -52,6 +57,8 @@ func RegisterLocalServerToEtcd(serverName string, port uint32, etcdEndpoints []s
 }
 
 //创建一个etcd client，endpoints为etcd的地址列表
+//serverInfo: 服务信息
+//endpoints: etcd集群地址
 func NewEtcdServer(serverInfo ServerInfoSt, endpoints []string) (*EtcdServer, error) {
 	cli, err := NewEtcd(endpoints)
 	if err != nil {
@@ -80,6 +87,7 @@ func (s *EtcdServer) Start() {
 	go s.startProcess()
 }
 
+//启动
 func (s *EtcdServer) startProcess() error {
 	defer func() {
 		if r := recover(); r != nil {

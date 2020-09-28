@@ -7,10 +7,14 @@ import (
 	"time"
 )
 
+//etcd基础函数
+
 const (
 	EtcdAutoSyncInterval = 60 * time.Second //从etcd集群更新当前集群endpoints，为时间间隔，0表示不同步，
 )
 
+//创建etcd client
+//endpoints: etcd集群地址
 func NewEtcd(endpoints []string) (*clientv3.Client, error) {
 	conf := clientv3.Config{
 		Endpoints:        endpoints,
@@ -33,10 +37,15 @@ func NewEtcd(endpoints []string) (*clientv3.Client, error) {
 	return cli, nil
 }
 
+//生成数据key
+//serverName: 服务名
+//ip: 服务ip
 func GetHostKey(serverName string, ip string) string {
 	return serverName + "/" + ip
 }
 
+//根据key解析服务名与ip
+//key: etcd数据项key
 func GetKeyInfo(key string) (string, string) {
 	subStr := strings.Split(key, "/")
 	if len(subStr) != 2 {
@@ -45,3 +54,5 @@ func GetKeyInfo(key string) (string, string) {
 
 	return subStr[0], subStr[1]
 }
+
+//todo Service Mesh -- Istio

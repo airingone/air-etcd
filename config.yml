@@ -12,3 +12,11 @@ log:
   maxBackups: 20 #file count
   maxAge: 30     #days
   compress: true
+
+etcd:
+  addrs: ["127.0.0.1:2380"]
+
+udp_client:
+  serverName: netserver_test
+  addr: etcd:netserver_test
+  timeOutMs: 5000
