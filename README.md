@@ -1,4 +1,4 @@
-# etcd client组建
+# etcd client组件
 ## 1.组件描述
 etcd client客户端，分别实现common client etcd client，common server etcd client，grpc client etcd client。 
 
@@ -57,6 +57,9 @@ func main() {
 ```
 import (
     "github.com/airingone/config"
+    "google.golang.org/grpc"
+    "google.golang.org/grpc/balancer/roundrobin"
+    "google.golang.org/grpc/resolver"
     air_etcd "github.com/airingone/air-etcd"
 )
 
