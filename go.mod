@@ -4,7 +4,7 @@ go 1.13
 
 require (
 	github.com/airingone/config v1.1.0
-	github.com/airingone/log v1.1.0
+	github.com/airingone/log v1.2.0
 	github.com/coreos/etcd v3.3.25+incompatible // indirect
 	github.com/coreos/go-systemd v0.0.0-20191104093116-d3cd4ed1dbcf // indirect
 	github.com/dustin/go-humanize v1.0.0 // indirect
