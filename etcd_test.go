@@ -53,6 +53,7 @@ func TestEtcdClient(t *testing.T) {
 		addr, _ := cli.RandGetServerAddr()
 		log.Error("[ETCD]: addrs2 %+v", addr)
 	}
+	etcdClient.Stop()
 
 	select {}
 }

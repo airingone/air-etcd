@@ -94,8 +94,12 @@ func (s *EtcdServer) startProcess() error {
 			log.PanicTrack()
 		}
 	}()
+	defer func() {
+		if s.Client != nil {
+			s.Client.Close()
+		}
+	}()
 
-	defer s.Client.Close()
 	ch, err := s.keepAlice()
 	if err != nil {
 		return err

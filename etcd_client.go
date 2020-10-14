@@ -155,7 +155,9 @@ func (c *EtcdClient) watcher(serverName string) error {
 
 //停止
 func (c *EtcdClient) Stop() {
-	c.Client.Close()
+	if c.Client != nil {
+		c.Client.Close()
+	}
 }
 
 //将key信息写入到ServerInfos
